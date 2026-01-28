@@ -7,7 +7,7 @@ You can find all the files for L7 [here](../L7). Here are some highlighted files
 - [Files for the `learning-a-tool` skill](../L7/.claude/skills/learning-a-tool/)
 - [utils.py](../L7/utils.py) (message formatting)
 - [agent.py](../L7/agent.py)
-- [The learning guide generated during filming](reading_material_7.md)
+- [The learning guide generated during filming](learning-mineru/)
 
 To run the agent, follow the instructions in the [README file](../L7/README.md).
 
