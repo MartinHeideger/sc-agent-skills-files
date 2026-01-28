@@ -29,9 +29,12 @@ If this is your first time trying Claude Code, you can check out these courses:
 
 If you've completed any of these courses and would like to see an advanced course on Claude Code, please leave us feedback on what topics you'd like us to cover.
 
+If you don't have an Anthropic subscription, you can optionally run Claude Code using an API key. Running the same exercises with Sonnet 4.5 costs approximately $1.57.
+
 ## Skills with Claude Code
 
 In the lesson, you saw how to add skills at the project level. Here's a <a href="https://code.claude.com/docs/en/skills#where-skills-live" target="_blank">list</a> of other locations where your skills can live.
+
 
 ### What additional fields can you add to the frontmatter?
 
@@ -40,6 +43,13 @@ In addition to `name` and `description`, you can add several other fields to you
 ### Skills Invocation in Claude Code
 
 Any skill in Claude Code can be model-invoked (as demonstrated in this lesson) or user-invoked. For example, if you want to invoke the skill `adding-cli-command`, you can type `/adding-cli-command` and then describe what command to add. The fields `disable-model-invocation` and `user-invocable` allow you to further control this behavior, as explained <a href="https://code.claude.com/docs/en/skills#control-who-invokes-a-skill" target="_blank">here</a>.
+
+If you find Claude Code not invoking the expected skill when needed, make sure:
+- You have restarted Claude Code after adding your skills
+- Your skill description includes enough detail for Claude to understand when to use it
+
+You can always manually invoke the skill yourself or explicitly instruct Claude to use a specific skill.
+
 
 ### Skills and Slash Commands Have Been Merged
 
@@ -101,3 +111,5 @@ There are two approaches for using skills with subagents:
 - For a more comprehensive guide on how to use Skills with Claude Code, please check out this <a href="https://code.claude.com/docs/en/skills" target="_blank">documentation</a>.
 
 - To learn more about subagents in Claude Code, check out this <a href="https://code.claude.com/docs/en/sub-agents" target="_blank">guide</a>.
+
+- <a href="https://code.claude.com/docs/en/skills#troubleshooting" target="_blank">Troubleshooting Guide</a>.

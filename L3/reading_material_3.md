@@ -18,6 +18,8 @@ You can set up a BigQuery table to try this part (link to instructions below), o
 - Optional: <a href="https://github.com/https-deeplearning-ai/sc-agent-skills-files/tree/main/L3/additional_references/table_setup.md#bigquery-setup" target="_blank">Instructions for setting up a BigQuery table</a>
 - Optional alternative: <a href="https://github.com/https-deeplearning-ai/sc-agent-skills-files/tree/main/L3/additional_references/table_setup.md#sqlite-setup" target="_blank">Instructions for setting up a SQLite table</a>
 
+**Note**: Since BigQuery MCP Server is a local MCP server, we used Claude Desktop (not Claude.ai). With Claude.ai, you can only use remote MCP servers.
+
 ## Part 2: Creating the Brand Guidelines Skill
 
 - <a href="https://github.com/https-deeplearning-ai/sc-agent-skills-files/tree/main/L3/brand_guidelines_files/" target="_blank">Brand guidelines files</a>
