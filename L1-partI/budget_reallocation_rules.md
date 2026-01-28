@@ -1,154 +1,140 @@
-# Marketing Budget Reallocation Rules
-## Weekly Optimization Framework
+# Budget Reallocation Rules
+
+## Table of Contents
+- [Rule 0: Minimum Data Eligibility](#rule-0-minimum-data-eligibility)
+- [Rule 1: Channel Classification](#rule-1-channel-classification)
+- [Rule 2: Calculate Budget Changes](#rule-2-calculate-budget-changes)
+- [Multi-Week Adjustments](#multi-week-adjustments)
+- [Decision Matrix](#decision-matrix)
+- [Required Output Format](#required-output-format)
 
 ---
 
-## Core Reallocation Rules
+## Rule 0: Minimum Data Eligibility
 
-### Rule 0: Minimum Data Eligibility
+A channel is eligible for budget changes only if it has **>=50 conversions** in the analysis period.
 
-Before applying any budget reallocation rules, ensure the channel has sufficient data to support statistically meaningful decisions. A channel is eligible for budget changes only if it meets one or more of the following conditions during the prior week:
-
-- At least 50 conversions
-- Weekly spend that represents at least 2× the average CPA (ensures signal strength)
-- Sufficient volume to establish reliable trends
-
-Channels below this threshold should maintain current budget and focus on creative, targeting, or structural optimization rather than budget adjustments. These channels should be reviewed qualitatively rather than quantitatively.
+Channels below threshold: classify as **INSUFFICIENT_DATA -> MAINTAIN**.
 
 ---
 
-### Rule 1: Performance-Based Decision Framework
+## Rule 1: Channel Classification
 
-Use the following criteria to determine budget adjustments for each marketing channel on a weekly basis.
+Classify each channel into exactly one category. Apply rules **in order** (first match wins):
 
-**Increase Budget by 10-15%**
+### PAUSE (100% decrease)
+Any condition triggers:
+- User states channel has been negative for 3+ consecutive weeks
+- User states no improvement after optimization efforts for 3+ weeks
 
-A channel qualifies for budget increase when it meets all of the following conditions:
-- ROAS exceeds the target threshold by 15% or more
-- CPA is at least 20% below the maximum acceptable level
-- Net profit is positive and showing growth on a 2-week rolling basis
-- The channel demonstrates scale capacity (impression share not capped, audience size sufficient, no sharp CPA inflation at recent higher spend levels)
+### DECREASE_HEAVY (45% decrease)
+Any condition triggers:
+- ROAS < 50% of target AND Net Profit <= 0
+- CPA > 150% of max AND Net Profit <= 0
+- All three fail: ROAS < 100% AND CPA > 100% AND Net Profit <= 0
+- User states channel has been negative for 2 consecutive weeks
 
-**Maintain Current Budget**
+### INCREASE (use user-specified cap, default 15%)
+All conditions must be met:
+- ROAS >= 115% of target
+- CPA <= 80% of max
+- Net Profit > 0
 
-A channel should maintain its current budget allocation when:
-- The channel meets all established performance targets for ROAS, CPA, and profitability
-- Performance metrics remain stable with less than 10% variation week-over-week
-- Recent changes have been implemented within the past 5-7 days and require stabilization time
-- Marginal ROAS testing has not yet been completed to validate scale capacity
+### DECREASE_LIGHT (25% decrease)
+Any condition triggers (if not already classified):
+- ROAS < 80% of target
+- CPA > 120% of max
 
-**Decrease Budget by 20-30%**
-
-A channel requires budget reduction when:
-- The channel fails to meet one or two of the established performance targets
-- ROAS falls 20% or more below the target threshold
-- CPA exceeds the maximum acceptable level by 20% or more
-- Net profit shows a declining 2-week trend, though remains positive
-
-**Decrease Budget by 40-50% or Pause**
-
-A channel requires significant budget cuts or complete pause when:
-- The channel fails all three performance targets (ROAS, CPA, and profitability)
-- Net profit remains negative for two or more consecutive weeks
-- No measurable improvement occurs after implementing optimization efforts
-- Marginal ROAS testing confirms performance remains below the minimum acceptable threshold
+### MAINTAIN (0% change)
+Does not meet any above criteria.
 
 ---
 
-### Rule 2: Rate of Change Constraints
+## Rule 2: Calculate Budget Changes
 
-To maintain platform algorithm stability and preserve campaign learning, implement the following constraints on budget adjustments.
-
-**Per-Channel Constraints**
-
-Limit weekly budget changes to 10-20% of the channel's current allocation. Allow 5-7 days between major budget adjustments to the same channel. Avoid changing multiple campaign variables simultaneously, such as budget, creative assets, and audience targeting.
-
-**Portfolio-Level Constraints**
-
-Establish a maximum total weekly reallocation amount across all channels, typically 15-20% of the monthly budget. Maintain a flexible reserve of 15-20% of the total budget for strategic opportunities and rapid response to market changes.
-
-**Rationale for Constraints**
-
-Modern advertising platforms rely on machine learning algorithms that require consistent data streams to optimize performance. Large, sudden budget changes force platforms into learning phases, temporarily degrading performance. Gradual adjustments preserve existing optimization while implementing strategic changes.
-
----
-
-### Rule 3: Incremental Testing Before Scaling
-
-Before committing to significant budget increases, validate that additional spend will maintain acceptable returns through incremental testing.
-
-**Testing Procedure**
-
-Increase the channel budget by 5-10% for a test period of 5-7 days. Monitor performance closely during this period. Calculate the marginal ROAS using the formula:
-
+### Step 1: Calculate Decreases (apply in full)
 ```
-Marginal ROAS = (Additional Revenue - Baseline Revenue) / (Additional Spend - Baseline Spend)
+DECREASE_HEAVY: decrease = current_spend * 0.45
+DECREASE_LIGHT: decrease = current_spend * 0.25
 ```
 
-Compare the marginal ROAS to your minimum acceptable ROAS threshold, not the channel's historical average performance.
+### Step 2: Calculate Freed Budget
+```
+freed_budget = sum(all decreases)
+```
 
-**Scaling Decision**
+### Step 3: Allocate to INCREASE Channels
+Distribute proportionally by Net Profit:
+```
+weight = channel_net_profit / sum(net_profit of all INCREASE channels)
+proposed_increase = freed_budget * weight
+```
 
-If the marginal ROAS meets or exceeds your target threshold, continue scaling the budget in similar increments. If the marginal ROAS falls below your target threshold, you have identified the channel's saturation point and should maintain the current spend level. Repeat this testing process with each subsequent increase to ensure continued efficiency.
+### Step 4: Apply Caps
+
+**Per-channel cap:** Use user-specified value if provided, otherwise default to 15%.
+```
+max_increase = current_spend * increase_cap
+final_increase = min(proposed_increase, max_increase)
+```
+
+**User reallocation limit** (if specified):
+- Applies to **increases only**, not decreases
+- If sum(proposed_increases) > user_limit: scale increases proportionally
+```
+scale_factor = user_limit / sum(proposed_increases)
+final_increase = proposed_increase * scale_factor
+```
+
+### Step 5: Calculate Unallocated Savings
+```
+unallocated = freed_budget - sum(final_increases)
+```
+Report as "available for reserve."
+
+---
+
+## Multi-Week Adjustments
+
+If user provides historical context, adjust the classification:
+
+| User Says | Adjustment |
+|-----------|------------|
+| "Channel X has been negative for 2+ weeks" | Upgrade to DECREASE_HEAVY or PAUSE |
+| "Channel X has been negative for 3+ weeks" | PAUSE (set budget to $0) |
+| "We changed Channel X's budget last week" | Override to MAINTAIN (allow 5-7 days to stabilize) |
+| "Channel X improved from last week" | Can upgrade DECREASE_LIGHT to MAINTAIN |
+
+Without historical context, use single-week classification only.
 
 ---
 
 ## Decision Matrix
 
-The following matrix provides clear guidance for weekly budget decisions based on performance relative to established targets.
-
-| ROAS vs Target | CPA vs Maximum | Net Profit Status | Budget Action |
-|----------------|----------------|-------------------|---------------|
-| ≥ 115% | ≤ 80% | Positive and growing (2-week trend) | Increase by 10-15% |
-| 100-115% | 80-100% | Positive and stable | Maintain current budget |
-| 80-100% | 100-120% | Positive but declining | Monitor closely, consider optimizations |
-| < 80% | > 120% | Positive but small | Decrease by 20-30% |
-| < 50% | > 150% | Negative (2+ weeks) | Decrease by 40-50% or pause |
-
----
-
-## Best Practices for Weekly Optimization
-
-### Data Review and Analysis
-
-Collect a complete week of performance data before making reallocation decisions. Daily fluctuations are normal and should not trigger budget changes. Focus on 2-week rolling trends rather than single-week snapshots to reduce overreaction to normal variance. Confirm that channels meet the minimum data eligibility thresholds defined in Rule 0 before applying quantitative decision rules. Ensure all data sources are accurate and properly attributed to avoid decisions based on flawed information.
-
-### Implementation Timing
-
-Make budget changes early in the week, preferably Monday or Tuesday, to capture a full week of post-change data. Implement one set of changes per week to maintain clarity on cause and effect. Document all changes with rationale, expected outcomes, and review dates. Respect platform-specific learning phases: Facebook and TikTok typically require 3-7 days for campaign learning after significant changes, while Google Ads automated bidding strategies need 2-3 days to adjust to budget modifications.
-
-### Change Prioritization
-
-When total proposed changes exceed your weekly reallocation limit, prioritize cutting budget from the worst-performing channels first. Allocate freed budget to the best-performing channels that have demonstrated capacity for additional spend. This approach maximizes overall portfolio efficiency while staying within constraints.
+| Condition | Classification | Change |
+|-----------|----------------|--------|
+| Negative 3+ weeks (user-stated) | PAUSE | -100% |
+| No improvement 3+ weeks (user-stated) | PAUSE | -100% |
+| Negative 2 weeks (user-stated) | DECREASE_HEAVY | -45% |
+| ROAS < 50% AND Net Profit <= 0 | DECREASE_HEAVY | -45% |
+| CPA > 150% AND Net Profit <= 0 | DECREASE_HEAVY | -45% |
+| ROAS < 100% AND CPA > 100% AND Net Profit <= 0 | DECREASE_HEAVY | -45% |
+| ROAS >= 115% AND CPA <= 80% AND Net Profit > 0 | INCREASE | +15% cap |
+| ROAS < 80% | DECREASE_LIGHT | -25% |
+| CPA > 120% | DECREASE_LIGHT | -25% |
+| All other cases | MAINTAIN | 0% |
 
 ---
 
-## Common Pitfalls to Avoid
+## Required Output Format
 
-### Overreaction to Short-Term Fluctuations
+### 1. Classification Table
+| Channel | ROAS | % of Target | CPA | % of Max | Net Profit | Classification |
 
-Avoid making budget decisions based on single-day performance anomalies. Week-over-week trends provide more reliable signals than daily variations. Short-term dips may reflect normal market fluctuations rather than systemic problems.
+### 2. Calculation Steps
+Show: freed budget, allocation weights, proposed vs. capped increases, unallocated savings.
 
-### Simultaneous Variable Changes
+### 3. Final Reallocation Table
+| Channel | Current | Change | New Budget | Classification |
 
-Changing multiple campaign elements at once makes it impossible to identify which factor drove performance changes. Adjust budget, creative assets, or targeting separately with sufficient time between changes to measure individual impact.
-
-### Premature Optimization During Learning
-
-Platforms need time to optimize after changes. Making additional adjustments during the learning phases described in Implementation Timing compounds instability and prevents accurate performance assessment.
-
-### Narrow Focus on ROAS
-
-ROAS is an important efficiency metric but not the sole indicator of channel value. A channel with moderate ROAS but high customer lifetime value may be more valuable than one with high ROAS and low retention. Always evaluate net profit alongside ROAS to ensure genuine business value.
-
-### Premature Abandonment of Winners
-
-Before assuming a channel has reached maximum efficiency, conduct marginal ROAS testing as described in Rule 3. Small performance dips do not necessarily indicate that a channel should be cut.
-
-### Prolonged Investment in Losers
-
-If a channel consistently fails to meet targets for three or more consecutive weeks despite optimization efforts, pause or significantly reduce its budget. The sunk cost fallacy should not drive continued investment in persistently underperforming channels. Reallocate resources to proven performers.
-
----
-
-*This framework provides structure for systematic budget optimization while maintaining the flexibility to respond to changing performance and market conditions.*
+Include "Reserve" row if unallocated > 0.
