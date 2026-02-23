@@ -42,3 +42,6 @@ We invite you to also think about your own workflow:
 * <a href="https://agentskills.io/home" target="_blank">Agent Skills</a>
 * <a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview" target="_blank">Agent Skills Anthropic Documentation</a>
 * <a href="https://claude.com/blog/skills" target="_blank">Blog: Introducing Agent Skills</a>
+
+## Anthropic Course
+* <a href="https://anthropic.skilljar.com/introduction-to-agent-skills" target="_blank">Introduction to Agent Skills (with Claude Code) </a>
